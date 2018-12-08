@@ -13,6 +13,7 @@ module Models where
 import Data.Aeson
 import Data.Text
 import Data.Time
+import Data.Maybe
 
 import Database.Persist.TH
 
@@ -22,7 +23,7 @@ EmergencyVehicle
   currLongitude   Double
   destLatitude    Double
   destLongitude   Double
-  updated         UTCTime default=CURRENT_TIME
+  updated         UTCTime Maybe default=CURRENT_TIME
   deriving Eq Read Show
 |]
 
@@ -32,7 +33,7 @@ instance FromJSON EmergencyVehicle where
          <*> v .: "currLongitude"
          <*> v .: "destLatitude"
          <*> v .: "destLongitude"
-         <*> v .: "updated"
+         <*> v .:? "updated"
 
 instance ToJSON EmergencyVehicle where
   toJSON (EmergencyVehicle cLat cLon dLat dLon t) =

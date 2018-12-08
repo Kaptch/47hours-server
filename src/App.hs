@@ -78,13 +78,7 @@ server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|
     vehiclePostInsert :: EmergencyVehicle -> IO (Key EmergencyVehicle)
     vehiclePostInsert newVehicle = flip runSqlPersistMPool pool $ insert newVehicle
 
-    test = return [EmergencyVehicle
-      { emergencyVehicleCurrLatitude = 0.0,
-        emergencyVehicleCurrLongitude = 0.0,
-        emergencyVehicleDestLatitude = 11.1,
-        emergencyVehicleDestLongitude = 22.2,
-        emergencyVehicleUpdated = testTime
-      }]
+    test = return [testEmergencyVehicle]
 
 {-
     vehiclePostUpdateH vID newVehicle = liftIO $ vehiclePostUpdate vID newVehicle
@@ -93,6 +87,14 @@ server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|
       time <- getCurrentTime
       return $ Just $ update (toPersistKey vID) [emergencyVehicleCurrLatitude =. ]
       -}
+
+testEmergencyVehicle = EmergencyVehicle
+  { emergencyVehicleCurrLatitude = 0.0,
+    emergencyVehicleCurrLongitude = 0.0,
+    emergencyVehicleDestLatitude = 11.1,
+    emergencyVehicleDestLongitude = 22.2,
+    emergencyVehicleUpdated = testTime
+  }
 
 testTime :: UTCTime
 testTime = understandTime "10:30:20"

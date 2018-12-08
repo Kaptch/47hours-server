@@ -13,6 +13,7 @@ import           Control.Monad.Logger                 (runStderrLoggingT)
 import           Data.String.Conversions              (cs)
 import           Data.Text                            (Text)
 import           Data.Time
+import Data.Int
 import           Database.Persist.Sqlite              (ConnectionPool,
                                                        Entity (..),
                                                        createSqlitePool,
@@ -20,7 +21,10 @@ import           Database.Persist.Sqlite              (ConnectionPool,
                                                        runMigration,
                                                        runSqlPersistMPool,
                                                        runSqlPool, selectFirst,
-                                                       selectList, (<=.), (==.))
+                                                       selectList, (<=.), (==.),
+                                                       (=.), update,
+                                                       toSqlKey, delete)
+
 import           Network.Wai.Handler.Warp             as Warp
 import           Network.Wai.Middleware.RequestLogger
 
@@ -30,8 +34,16 @@ import           Servant
 
 import           Api
 import           Models
+
 {-
-sqlite3 pp.db "CREATE TABLE EmergencyVehicles (vehicleID INTEGER PRIMARY KEY, currLatitude double, currLongitude double, distLatitude double, destLongitude double); INSERT INTO EmergencyVehicles (currLatitude, currLongitude, distLatitude, destLongitude) VALUES (0.0, 0.0, 10.0, 20.0);"
+"create trigger create_timestamp
+after insert
+on emergency_vehicle
+for each row
+when (new.updated is null)
+begin
+update emergency_vehicle set updated = CURRENT_TIMESTAMP where id = new.id;
+end;"
 -}
 
 timeFormat = "%H:%M:%S"
@@ -57,7 +69,7 @@ app :: ConnectionPool -> Application
 app pool = serve api $ server pool
 
 server :: ConnectionPool -> Server EmergencyVehicleAPI
-server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|> {-vehiclePostUpdateH :<|>-} test
+server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|> vehiclePostUpdateH :<|> vehicleDeleteH :<|> test
   where
     vehicleGetAllH = liftIO vehicleGetAll
     vehicleGetAll = flip runSqlPersistMPool pool $ do
@@ -78,22 +90,30 @@ server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|
     vehiclePostInsert :: EmergencyVehicle -> IO (Key EmergencyVehicle)
     vehiclePostInsert newVehicle = flip runSqlPersistMPool pool $ insert newVehicle
 
-    test = return [testEmergencyVehicle]
-
-{-
     vehiclePostUpdateH vID newVehicle = liftIO $ vehiclePostUpdate vID newVehicle
-    vehiclePostUpdate :: Int -> EmergencyVehicle -> IO ()
+    vehiclePostUpdate :: Int64 -> EmergencyVehicle -> IO ()
     vehiclePostUpdate vID newVehicle = flip runSqlPersistMPool pool $ do
-      time <- getCurrentTime
-      return $ Just $ update (toPersistKey vID) [emergencyVehicleCurrLatitude =. ]
-      -}
+      time <- liftIO getCurrentTime
+      update (toSqlKey vID) [
+          EmergencyVehicleCurrLatitude =. emergencyVehicleCurrLatitude newVehicle
+        , EmergencyVehicleCurrLongitude =. emergencyVehicleCurrLongitude newVehicle
+        , EmergencyVehicleDestLatitude =. emergencyVehicleDestLatitude newVehicle
+        , EmergencyVehicleDestLongitude =. emergencyVehicleDestLongitude newVehicle
+        , EmergencyVehicleUpdated =. Just time
+        ]
+
+    vehicleDeleteH vID = liftIO $ vehicleDelete vID
+    vehicleDelete :: Int64 -> IO ()
+    vehicleDelete vID = flip runSqlPersistMPool pool $ delete (toSqlKey vID :: EmergencyVehicleId)
+
+    test = return [testEmergencyVehicle]
 
 testEmergencyVehicle = EmergencyVehicle
   { emergencyVehicleCurrLatitude = 0.0,
     emergencyVehicleCurrLongitude = 0.0,
     emergencyVehicleDestLatitude = 11.1,
     emergencyVehicleDestLongitude = 22.2,
-    emergencyVehicleUpdated = testTime
+    emergencyVehicleUpdated = Just testTime
   }
 
 testTime :: UTCTime

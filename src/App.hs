@@ -1,27 +1,30 @@
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies      #-}
 {-# LANGUAGE TypeOperators     #-}
-{-# LANGUAGE FlexibleContexts #-}
 
 module App where
 
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Logger (runStderrLoggingT)
-import           Database.Persist.Sqlite ( ConnectionPool, createSqlitePool
-                                         , runSqlPool, runSqlPersistMPool
-                                         , runMigration, selectFirst, (==.)
-                                         , insert, entityVal
-                                         , selectList, (<=.), Entity(..))
-import           Data.String.Conversions (cs)
-import           Data.Text (Text)
-import           Network.Wai.Handler.Warp as Warp
-import Network.Wai.Middleware.RequestLogger
-import Data.Time
+import           Control.Monad.IO.Class               (liftIO)
+import           Control.Monad.Logger                 (runStderrLoggingT)
+import           Data.String.Conversions              (cs)
+import           Data.Text                            (Text)
+import           Data.Time
+import           Database.Persist.Sqlite              (ConnectionPool,
+                                                       Entity (..),
+                                                       createSqlitePool,
+                                                       entityVal, insert,
+                                                       runMigration,
+                                                       runSqlPersistMPool,
+                                                       runSqlPool, selectFirst,
+                                                       selectList, (<=.), (==.))
+import           Network.Wai.Handler.Warp             as Warp
+import           Network.Wai.Middleware.RequestLogger
 
-import System.IO
+import           System.IO
 
 import           Servant
 
@@ -33,9 +36,6 @@ sqlite3 pp.db "CREATE TABLE EmergencyVehicles (vehicleID INTEGER PRIMARY KEY, cu
 
 timeFormat = "%H:%M:%S"
 understandTime = parseTimeOrError True defaultTimeLocale timeFormat
-
-time :: UTCTime
-time = understandTime "10:30:20"
 
 run :: FilePath -> IO ()
 run sqliteFile = do
@@ -67,7 +67,7 @@ server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|
     vehicleGetClosestH cLat cLon = case cLat of
         Nothing -> throwError err404
         Just cLa -> case cLon of
-          Nothing -> throwError err404
+          Nothing  -> throwError err404
           Just cLo -> liftIO $ vehicleClosestGet cLa cLo
     vehicleClosestGet :: Double -> Double -> IO [EmergencyVehicle]
     vehicleClosestGet cLat cLon = flip runSqlPersistMPool pool $ do
@@ -83,7 +83,7 @@ server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|
         emergencyVehicleCurrLongitude = 0.0,
         emergencyVehicleDestLatitude = 11.1,
         emergencyVehicleDestLongitude = 22.2,
-        emergencyVehicleUpdated = time
+        emergencyVehicleUpdated = testTime
       }]
 
 {-
@@ -93,3 +93,6 @@ server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|
       time <- getCurrentTime
       return $ Just $ update (toPersistKey vID) [emergencyVehicleCurrLatitude =. ]
       -}
+
+testTime :: UTCTime
+testTime = understandTime "10:30:20"

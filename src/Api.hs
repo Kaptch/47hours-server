@@ -17,7 +17,6 @@ import Models
 import Servant.API
 
 type EmergencyVehicleAPI =
-  "vehicle" :> Get '[JSON] [EmergencyVehicle] :<|>
   "vehicle" :> QueryParam "latitude" Double :> QueryParam "longitude" Double :> Get '[JSON] [EmergencyVehicle] :<|>
   "vehicle" :> ReqBody '[JSON] EmergencyVehicle :> Post '[JSON] (Key EmergencyVehicle) :<|>
   "vehicle" :> Capture "key" Int64 :> ReqBody '[JSON] EmergencyVehicle :> Put '[JSON] () :<|>

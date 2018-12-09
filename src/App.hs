@@ -63,13 +63,8 @@ app :: ConnectionPool -> Application
 app pool = serve api $ server pool
 
 server :: ConnectionPool -> Server EmergencyVehicleAPI
-server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|> vehiclePostUpdateH :<|> vehicleDeleteH :<|> test
+server pool = vehicleGetClosestH :<|> vehiclePostInsertH :<|> vehiclePostUpdateH :<|> vehicleDeleteH :<|> test
   where
-    vehicleGetAllH = liftIO vehicleGetAll
-    vehicleGetAll = flip runSqlPersistMPool pool $ do
-      mEmergencyVehicle <- selectList [] []
-      return $ entityVal <$> mEmergencyVehicle
-
     vehicleGetClosestH cLat cLon = case cLat of
         Nothing -> throwError err406
         Just cLa -> case cLon of

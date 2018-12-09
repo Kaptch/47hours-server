@@ -1,20 +1,20 @@
 {-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies      #-}
 {-# LANGUAGE TypeOperators     #-}
 
 module Api where
 
-import Data.Proxy
-import Data.Text
-import Data.Int
+import           Data.Int
+import           Data.Proxy
+import           Data.Text
 
-import Database.Persist
+import           Database.Persist
 
-import Models
+import           Models
 
-import Servant.API
+import           Servant.API
 
 type EmergencyVehicleAPI =
   "vehicle" :> QueryParam "latitude" Double :> QueryParam "longitude" Double :> Get '[JSON] [EmergencyVehicle] :<|>

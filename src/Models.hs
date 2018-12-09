@@ -6,16 +6,16 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies               #-}
 
 module Models where
 
-import Data.Aeson
-import Data.Text
-import Data.Time
-import Data.Maybe
+import           Data.Aeson
+import           Data.Maybe
+import           Data.Text
+import           Data.Time
 
-import Database.Persist.TH
+import           Database.Persist.TH
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 EmergencyVehicle

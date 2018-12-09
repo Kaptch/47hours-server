@@ -10,21 +10,20 @@ module App where
 
 import           Control.Monad.IO.Class               (liftIO)
 import           Control.Monad.Logger                 (runStderrLoggingT)
+import           Data.Int
 import           Data.String.Conversions              (cs)
 import           Data.Text                            (Text)
 import           Data.Time
-import Data.Int
 import           Database.Persist.Sqlite              (ConnectionPool,
                                                        Entity (..),
-                                                       createSqlitePool,
+                                                       createSqlitePool, delete,
                                                        entityVal, insert,
                                                        runMigration,
                                                        runSqlPersistMPool,
                                                        runSqlPool, selectFirst,
-                                                       selectList, (<=.), (==.),
-                                                       (=.), update,
-                                                       toSqlKey, delete,
-                                                       (<.), (>.))
+                                                       selectList, toSqlKey,
+                                                       update, (<.), (<=.),
+                                                       (=.), (==.), (>.))
 
 import           Network.Wai.Handler.Warp             as Warp
 import           Network.Wai.Middleware.RequestLogger

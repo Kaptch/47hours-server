@@ -23,7 +23,8 @@ import           Database.Persist.Sqlite              (ConnectionPool,
                                                        runSqlPool, selectFirst,
                                                        selectList, (<=.), (==.),
                                                        (=.), update,
-                                                       toSqlKey, delete)
+                                                       toSqlKey, delete,
+                                                       (<.), (>.))
 
 import           Network.Wai.Handler.Warp             as Warp
 import           Network.Wai.Middleware.RequestLogger
@@ -36,14 +37,7 @@ import           Api
 import           Models
 
 {-
-"create trigger create_timestamp
-after insert
-on emergency_vehicle
-for each row
-when (new.updated is null)
-begin
-update emergency_vehicle set updated = CURRENT_TIMESTAMP where id = new.id;
-end;"
+sqlite3 "pp.db" "create trigger create_timestamp after insert on emergency_vehicle for each row when (new.updated is null) begin update emergency_vehicle set updated = CURRENT_TIMESTAMP where id = new.id; end;"
 -}
 
 timeFormat = "%H:%M:%S"
@@ -77,13 +71,17 @@ server pool = vehicleGetAllH :<|> vehicleGetClosestH :<|> vehiclePostInsertH :<|
       return $ entityVal <$> mEmergencyVehicle
 
     vehicleGetClosestH cLat cLon = case cLat of
-        Nothing -> throwError err404
+        Nothing -> throwError err406
         Just cLa -> case cLon of
-          Nothing  -> throwError err404
+          Nothing  -> throwError err406
           Just cLo -> liftIO $ vehicleClosestGet cLa cLo
     vehicleClosestGet :: Double -> Double -> IO [EmergencyVehicle]
     vehicleClosestGet cLat cLon = flip runSqlPersistMPool pool $ do
-      mEmergencyVehicle <- selectList [] [] -- TODO
+      mEmergencyVehicle <- selectList [ EmergencyVehicleCurrLatitude <. cLat + 0.01
+                                      , EmergencyVehicleCurrLatitude >. cLat - 0.01
+                                      , EmergencyVehicleCurrLongitude <. cLon + 0.01
+                                      , EmergencyVehicleCurrLongitude >. cLon - 0.01
+                                      ] []
       return $ entityVal <$> mEmergencyVehicle
 
     vehiclePostInsertH newVehicle = liftIO $ vehiclePostInsert newVehicle
